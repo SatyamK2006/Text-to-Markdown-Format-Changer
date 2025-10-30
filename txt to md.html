@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rich Text → Markdown (Turndown)</title>
+  <script src="https://unpkg.com/turndown/dist/turndown.js"></script>
+  <script src="https://unpkg.com/turndown-plugin-gfm/dist/turndown-plugin-gfm.js"></script>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #fafafa;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 { margin-bottom: 1rem; }
+    textarea {
+      width: 600px;
+      height: 400px;
+      padding: 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 16px;
+      resize: none;
+      background: white;
+    }
+    .container {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .upload-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 18px;
+    }
+    .upload-container label {
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+    input[type="file"] {
+      margin: 0 0 8px 0;
+    }
+    button {
+      margin-top: 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    button:hover { background: #0056b3; }
+    footer {
+      margin-top: 30px;
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>📝 Rich Text → Markdown</h1>
+
+  <div class="upload-container">
+    <label for="fileInput">Upload .html or .txt file:</label>
+    <input type="file" id="fileInput" accept=".html,.txt" />
+  </div>
+
+  <div class="container">
+    <textarea id="htmlInput" placeholder="Paste HTML or rich text here..."></textarea>
+    <textarea id="mdOutput" placeholder="Markdown output will appear here..."></textarea>
+  </div>
+
+  <div>
+    <button id="convertBtn">Convert to Markdown</button>
+    <button id="copyBtn">Copy Markdown</button>
+    <button id="downloadBtn">Download .md</button>
+  </div>
+
+  <footer>Powered by Turndown.js + GFM plugin</footer>
+
+  <script>
+    const turndownService = new TurndownService({
+      headingStyle: 'atx',
+      codeBlockStyle: 'fenced',
+      emDelimiter: '*',
+      bulletListMarker: '-',
+    });
+    turndownService.use(turndownPluginGfm.gfm);
+
+    const htmlInput = document.getElementById("htmlInput");
+    const mdOutput = document.getElementById("mdOutput");
+    const convertBtn = document.getElementById("convertBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const fileInput = document.getElementById("fileInput");
+
+    convertBtn.addEventListener("click", () => {
+      const html = htmlInput.value.trim();
+      if (!html) return alert("Please paste or upload HTML first!");
+      mdOutput.value = turndownService.turndown(html);
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      const md = mdOutput.value;
+      if (!md) return alert("Nothing to copy!");
+      await navigator.clipboard.writeText(md);
+      copyBtn.textContent = "✅ Copied!";
+      setTimeout(() => copyBtn.textContent = "Copy Markdown", 1500);
+    });
+
+    // ✅ Real “Save As” dialog using File System Access API
+    downloadBtn.addEventListener("click", async () => {
+      const markdown = mdOutput.value;
+      if (!markdown) return alert("Nothing to download!");
+
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: "converted.md",
+            types: [
+              {
+                description: "Markdown file",
+                accept: { "text/markdown": [".md"] },
+              },
+            ],
+          });
+          const writable = await handle.createWritable();
+          await writable.write(markdown);
+          await writable.close();
+          alert("✅ File saved successfully!");
+        } catch (err) {
+          if (err.name !== "AbortError") console.error("Save failed:", err);
+        }
+      } else {
+        // Fallback for unsupported browsers
+        const blob = new Blob([markdown], { type: "text/markdown" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "converted.md";
+        a.click();
+        URL.revokeObjectURL(url);
+        alert("Browser doesn’t support Save As dialog — file auto-downloaded.");
+      }
+    });
+
+    // 📂 Upload .html or .txt file
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => (htmlInput.value = ev.target.result);
+      reader.readAsText(file);
+    });
+
+    htmlInput.addEventListener("paste", (e) => {
+      e.preventDefault();
+      const html = (e.clipboardData || window.clipboardData).getData("text/html");
+      const text = (e.clipboardData || window.clipboardData).getData("text/plain");
+      htmlInput.value = html || text;
+    });
+  </script>
+</body>
+</html>
