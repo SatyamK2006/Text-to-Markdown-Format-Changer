@@ -60,7 +60,7 @@ Or just open `index.html` directly in your browser — works **fully offline**!
 ## 🌐 Live Demo
 
 Try it here:  
-👉 **satyamk2006.github.io/Text-to-Markdown-Format-Changer/**
+👉 **https://satyamk2006.github.io/Text-to-Markdown-Format-Changer**
 
 * * *
 
