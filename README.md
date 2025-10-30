@@ -60,7 +60,7 @@ Or just open `index.html` directly in your browser — works **fully offline**!
 ## 🌐 Live Demo
 
 Try it here:  
-👉 **https://your-username.github.io/richtext-to-markdown/**
+👉 **satyamk2006.github.io/Text-to-Markdown-Format-Changer/**
 
 * * *
 
